@@ -13,5 +13,11 @@
     "chai"
   ],
   "author": "Ashish Raghuvanshi",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
 }
