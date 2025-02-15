@@ -1,8 +1,12 @@
 import "dotenv/config";
 import connectDB from "./db/index.js";
 import { app } from "./app.js";
+import { configDotenv } from "dotenv";
+configDotenv({
+  path: "./env",
+});
 connectDB().then(() => {
-  app.on("error", () => {
+  app.on("error", (error) => {
     console.error("error in connecting serve to Db", error);
     throw error;
   });

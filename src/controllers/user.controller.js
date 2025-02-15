@@ -14,9 +14,12 @@ const registerUser = asyncHandler(async (req, res) => {
   //remove password and refresh token field from response
   //check for user creation
   //return response or return error
-
+  console.log("in controller");
   const { fullName, email, username, password } = req.body;
   console.log("email: ", email);
+  console.log("fullName: ", fullName);
+  console.log("username: ", username);
+  console.log("password: ", password);
 
   // if (fullName === "") {
   //   throw new ApiError(400, "fullname is required");
@@ -26,23 +29,22 @@ const registerUser = asyncHandler(async (req, res) => {
   ) {
     throw new ApiError(409, "All field are required");
   }
-  if (
-    User.findOne({
-      $or: [{ email }, { username }],
-    })
-  ) {
-    throw new ApiError("500", "user existed!!");
+  const existingUser = await User.findOne({
+    $or: [{ email }, { username }],
+  });
+  if (existingUser) {
+    throw new ApiError(500, "user existed!!");
   }
 
-  //console.log(req.files)
+  console.log("req.file", req.files.avatar[0].path);
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
   }
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
+  console.log("avater is here", avatar);
   if (!avatar) {
     throw new ApiError(400, "Avatar is required");
   }
@@ -56,17 +58,13 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   //checking if user is created in Db by find it in Db
-  const createdUser = await user
-    .findById(user?._id)
-    .select("-password -refreshToken");
+  const createdUser = await User.findById(user?._id).select(
+    "-password -refreshToken"
+  );
 
   if (!createdUser) {
     throw new ApiError(500, "something went wrong while registering the user");
   }
-
-  res.send(200, "done").json({
-    createdUser,
-  });
 
   //sending response
 
