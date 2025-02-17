@@ -1,6 +1,11 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import {
+  loginUser,
+  logoutUser,
+  registerUser,
+} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJwt } from "../middlewares/auth.middlemare.js";
 const router = Router();
 router.route("/register").post(
   upload.fields([
@@ -16,4 +21,14 @@ router.route("/register").post(
   registerUser
 );
 
+router.route("/login").post(loginUser);
+//these routes are only given when user is loggedIn
+router.route("/logout").post(verifyJwt, logoutUser);
+
+router.route("/test-cookie").post((req, res) => {
+  console.log(req.cookies);
+  res.status(200).json({
+    data: req.cookies,
+  });
+});
 export default router;

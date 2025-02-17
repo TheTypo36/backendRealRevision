@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 const userSchema = new mongoose.Schema(
   {
@@ -57,14 +57,14 @@ userSchema.pre("save", async function (req, res, next) {
   next;
 });
 
-userSchema.methods.isPasswordCorrect = async function () {
+userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
 userSchema.methods.generateAccessToken = function () {
-  Jwt.sign(
+  return jwt.sign(
     {
-      id: this._id,
+      _id: this._id,
       username: this.username,
       email: this.email,
       fullName: this.fullName,
@@ -76,8 +76,8 @@ userSchema.methods.generateAccessToken = function () {
   );
 };
 
-userSchema.methods.generateRefershToken = function () {
-  Jwt.sign(
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
     {
       id: this._id,
     },
