@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   loginUser,
   logoutUser,
+  refreshAccessToken,
   registerUser,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -24,11 +25,6 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 //these routes are only given when user is loggedIn
 router.route("/logout").post(verifyJwt, logoutUser);
+router.route("/refresh-token").post(refreshAccessToken);
 
-router.route("/test-cookie").post((req, res) => {
-  console.log(req.cookies);
-  res.status(200).json({
-    data: req.cookies,
-  });
-});
 export default router;

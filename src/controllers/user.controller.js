@@ -4,6 +4,22 @@ import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { jwt } from "jsonwebtoken";
+
+const generateAccessAndRefreshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateAccessToken();
+
+    user.refreshToken = refreshToken;
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(401, error);
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   //get the user details from frontend( via postman)
   //validate if the details are correct or not
@@ -157,4 +173,54 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(201, {}, "user is loggedOut"));
 });
-export { registerUser, loginUser, logoutUser };
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  try {
+    const incomingRefreshToken =
+      req.cookie.refreshToken || req.body.refreshToken;
+    if (!incomingRefreshToken) {
+      throw new ApiError(404, "incomingRefreshToken not find");
+    }
+
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFERESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, "invalid refreshToken");
+    }
+    if (user?.refreshToken !== incomingRefreshToken) {
+      throw new ApiError(401, "refresh token is expired or used");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            accessToken,
+            refreshToken: newRefreshToken,
+          },
+          "user loggedIn again"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(
+      401,
+      error?.message || "refreshAccess can be generated for some reason"
+    );
+  }
+});
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
